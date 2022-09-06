@@ -2,6 +2,7 @@ import jwt
 import bcrypt
 
 from flask import Flask, jsonify, request, current_app, Response, g
+from flask_cors import CORS
 from flask.json import JSONEncoder
 from sqlalchemy import create_engine, text
 from datetime import datetime, timedelta
@@ -140,7 +141,8 @@ def login_required(f):
 def create_app(test_config = None):
     app = Flask(__name__)
 
-    app.json_encoder = CustomJSONEncoder
+    CORS(app)
+    #app.json_encoder = CustomJSONEncoder
 
     if test_config is None:
         app.config.from_pyfile("config.py")
@@ -185,7 +187,8 @@ def create_app(test_config = None):
             'HS256')
 
             return jsonify({
-                'access_token' : token  # .decode('UTF-8')
+                'access_token' : token,  # .decode('UTF-8')
+                'user_id'      : user_id
             })
         else:
             return '', 401
@@ -231,6 +234,16 @@ def create_app(test_config = None):
             'timeline' : get_timeline(user_id)
         })
     
+    @app.route("/timeline", methods=['GET'])
+    @login_required
+    def user_timeline():
+        user_id = g.user_id
+
+        return jsonify({
+            'user_id' : user_id,
+            'timeline' : get_timeline(user_id)
+        })
+
     return app
 
     
